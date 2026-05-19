@@ -8,6 +8,7 @@ from .config import (
     resolve_codexbar_path,
 )
 from .formatters.json_formatter import format_json
+from .formatters.cost_text_formatter import format_cost_text
 from .formatters.text_formatter import format_text
 from .formatters.waybar_formatter import format_waybar
 from .models import UsageReport
@@ -140,7 +141,7 @@ def _cost(args: argparse.Namespace) -> int:
     except CodexBarError as exc:
         report = _cached_or_error(cache, str(exc), config.use_cache_on_error)
 
-    _print_report(args.format, report, config, pretty=args.pretty)
+    _print_cost_report(args.format, report, config, pretty=args.pretty)
     return 0 if not report.error or report.stale else 1
 
 
@@ -178,6 +179,18 @@ def _print_report(
         )
         return
     print(format_text(report))
+
+
+def _print_cost_report(
+    output_format: str,
+    report: UsageReport,
+    config: AppConfig,
+    pretty: bool = False,
+) -> None:
+    if output_format != "text":
+        _print_report(output_format, report, config, pretty=pretty)
+        return
+    print(format_cost_text(report))
 
 
 def _config(args: argparse.Namespace) -> int:

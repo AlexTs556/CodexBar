@@ -32,6 +32,16 @@ linux-codex-usage cost --provider codex
 linux-codex-usage cost --provider codex --format waybar
 ```
 
+For terminal use, run cost without `--format waybar`:
+
+```bash
+linux-codex-usage cost --provider codex
+```
+
+That prints a human-readable report with today, last 7 days, last 30 days, top models, and recent daily usage.
+
+`--format waybar` is only for panel integrations and intentionally returns Waybar JSON.
+
 The command runs:
 
 ```bash
