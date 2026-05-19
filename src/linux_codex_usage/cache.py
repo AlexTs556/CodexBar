@@ -23,11 +23,14 @@ class UsageCache:
         return cls(default_cache_path())
 
     def save(self, report: UsageReport) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(
-            json.dumps(report.to_dict(), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(
+                json.dumps(report.to_dict(), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        except OSError:
+            return
 
     def load(self) -> UsageReport | None:
         if not self.path.exists():
@@ -42,4 +45,3 @@ class UsageCache:
             return None
 
         return UsageReport.from_dict(data)
-

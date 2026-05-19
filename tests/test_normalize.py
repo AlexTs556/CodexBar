@@ -77,6 +77,24 @@ class NormalizeUsageTest(unittest.TestCase):
         self.assertEqual(report.providers[0].provider, "codex")
         self.assertEqual(len(report.providers[0].windows), 2)
 
+    def test_normalizes_nested_provider_error(self):
+        report = normalize_usage(
+            [
+                {
+                    "provider": "synthetic",
+                    "source": "auto",
+                    "error": {
+                        "message": "No available fetch strategy for synthetic.",
+                        "code": 1,
+                    },
+                }
+            ]
+        )
+
+        provider = report.providers[0]
+        self.assertEqual(provider.status, "error")
+        self.assertEqual(provider.error, "No available fetch strategy for synthetic.")
+
 
 if __name__ == "__main__":
     unittest.main()

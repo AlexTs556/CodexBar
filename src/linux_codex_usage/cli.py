@@ -35,6 +35,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to the codexbar executable.",
     )
     status.add_argument(
+        "--source",
+        choices=("auto", "web", "cli", "oauth", "api"),
+        default=None,
+        help="CodexBar provider source strategy.",
+    )
+    status.add_argument(
         "--pretty",
         action="store_true",
         help="Pretty-print JSON output.",
@@ -74,7 +80,7 @@ def _status(args: argparse.Namespace) -> int:
 
     try:
         client = CodexBarClient(codexbar_path, timeout_seconds=config.timeout_seconds)
-        report = normalize_usage(client.fetch_json(providers))
+        report = normalize_usage(client.fetch_json(providers, source=args.source))
         cache.save(report)
     except CodexBarError as exc:
         report = _cached_or_error(cache, str(exc), config.use_cache_on_error)

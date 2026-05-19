@@ -15,8 +15,12 @@ class CodexBarClient:
     executable: str = "codexbar"
     timeout_seconds: int = 30
 
-    def fetch_json(self, providers: list[str] | None = None) -> Any:
-        command = self._build_command(providers)
+    def fetch_json(
+        self,
+        providers: list[str] | None = None,
+        source: str | None = None,
+    ) -> Any:
+        command = self._build_command(providers, source=source)
 
         try:
             completed = subprocess.run(
@@ -35,21 +39,25 @@ class CodexBarClient:
                 f"codexbar command timed out after {self.timeout_seconds}s"
             ) from exc
 
-        if completed.returncode != 0:
-            stderr = completed.stderr.strip()
-            stdout = completed.stdout.strip()
-            detail = stderr or stdout or f"exit code {completed.returncode}"
-            raise CodexBarError(f"codexbar command failed: {detail}")
-
         try:
             return json.loads(completed.stdout)
         except json.JSONDecodeError as exc:
+            if completed.returncode != 0:
+                stderr = completed.stderr.strip()
+                stdout = completed.stdout.strip()
+                detail = stderr or stdout or f"exit code {completed.returncode}"
+                raise CodexBarError(f"codexbar command failed: {detail}") from exc
             raise CodexBarError("codexbar returned invalid JSON") from exc
 
-    def _build_command(self, providers: list[str] | None) -> list[str]:
+    def _build_command(
+        self,
+        providers: list[str] | None,
+        source: str | None = None,
+    ) -> list[str]:
         selected = providers or ["all"]
-        command = [self.executable, "--format", "json"]
+        command = [self.executable, "usage", "--format", "json"]
         for provider in selected:
             command.extend(["--provider", provider])
+        if source:
+            command.extend(["--source", source])
         return command
-

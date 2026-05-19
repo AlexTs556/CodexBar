@@ -27,12 +27,13 @@ linux-codex-usage status
 linux-codex-usage status --format json --pretty
 linux-codex-usage status --format waybar
 linux-codex-usage status --provider codex --provider claude
+linux-codex-usage status --provider codex --source cli
 ```
 
 The command runs:
 
 ```bash
-codexbar --format json --provider all
+codexbar usage --format json --provider all
 ```
 
 or the selected providers passed with `--provider`.
@@ -106,4 +107,3 @@ Optional CSS classes:
 PYTHONPATH=src python3 -m unittest discover -s tests
 python3 -m compileall src tests
 ```
-

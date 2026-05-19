@@ -49,7 +49,7 @@ def _normalize_provider(item: dict[str, Any]) -> ProviderUsage:
     provider_id = _first_string(item, "provider", "id", "name", default="unknown")
     label = _first_string(item, "label", "display_name", "title", default=None)
     status = _first_string(item, "status", "state", default=None)
-    error = _first_string(item, "error", "message", default=None)
+    error = _extract_error(item)
 
     if not status:
         status = "error" if error else "ok"
@@ -149,6 +149,20 @@ def _looks_like_single_provider(raw: dict[str, Any]) -> bool:
     return any(key in raw for key in marker_keys)
 
 
+def _extract_error(item: dict[str, Any]) -> str | None:
+    error = item.get("error")
+    if isinstance(error, dict):
+        message = error.get("message")
+        if message:
+            return str(message)
+    if error:
+        return str(error)
+    message = item.get("message")
+    if message:
+        return str(message)
+    return None
+
+
 def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {"value": value}
 
@@ -186,4 +200,3 @@ def _to_float(value: Any) -> float | None:
 
 def _title_label(provider_id: str) -> str:
     return provider_id.replace("_", " ").replace("-", " ").title()
-
