@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linux-codex-usage"
+version = "0.1.0"
+description = "Linux data layer for AI coding usage limits and balances"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "AlexTs556" }
+]
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+linux-codex-usage = "linux_codex_usage.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
