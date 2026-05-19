@@ -10,7 +10,7 @@ class CodexBarClientTest(unittest.TestCase):
     def test_builds_usage_json_command(self):
         client = CodexBarClient("codexbar")
 
-        command = client._build_command(["codex", "claude"], source="cli")
+        command = client._build_usage_command(["codex", "claude"], source="cli")
 
         self.assertEqual(
             command,
@@ -42,6 +42,25 @@ class CodexBarClientTest(unittest.TestCase):
             data = client.fetch_json(["synthetic"])
 
         self.assertEqual(data[0]["provider"], "synthetic")
+
+    def test_builds_cost_json_command(self):
+        client = CodexBarClient("codexbar")
+
+        command = client._build_cost_command(["codex"], days=7)
+
+        self.assertEqual(
+            command,
+            [
+                "codexbar",
+                "cost",
+                "--format",
+                "json",
+                "--provider",
+                "codex",
+                "--days",
+                "7",
+            ],
+        )
 
 
 if __name__ == "__main__":

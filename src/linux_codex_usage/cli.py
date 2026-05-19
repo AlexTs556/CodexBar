@@ -1,7 +1,12 @@
 import argparse
 from .cache import UsageCache
 from .codexbar_client import CodexBarClient, CodexBarError
-from .config import AppConfig, create_default_config, default_config_path
+from .config import (
+    AppConfig,
+    create_default_config,
+    default_config_path,
+    resolve_codexbar_path,
+)
 from .formatters.json_formatter import format_json
 from .formatters.text_formatter import format_text
 from .formatters.waybar_formatter import format_waybar
@@ -46,6 +51,36 @@ def build_parser() -> argparse.ArgumentParser:
         help="Pretty-print JSON output.",
     )
 
+    cost = subparsers.add_parser("cost", help="Fetch and print local cost usage.")
+    cost.add_argument(
+        "--format",
+        choices=("text", "json", "waybar"),
+        default="text",
+        help="Output format.",
+    )
+    cost.add_argument(
+        "--provider",
+        action="append",
+        dest="providers",
+        help="Provider to fetch. Can be passed multiple times.",
+    )
+    cost.add_argument(
+        "--days",
+        type=int,
+        default=None,
+        help="History window in days.",
+    )
+    cost.add_argument(
+        "--codexbar-path",
+        default=None,
+        help="Path to the codexbar executable.",
+    )
+    cost.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print JSON output.",
+    )
+
     config = subparsers.add_parser("config", help="Manage local configuration.")
     config_subparsers = config.add_subparsers(dest="config_command")
     config_subparsers.add_parser("init", help="Create a default config file.")
@@ -65,6 +100,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "status":
         return _status(args)
 
+    if args.command == "cost":
+        return _cost(args)
+
     if args.command == "config":
         return _config(args)
 
@@ -75,12 +113,29 @@ def main(argv: list[str] | None = None) -> int:
 def _status(args: argparse.Namespace) -> int:
     config = AppConfig.load()
     providers = args.providers or config.providers
-    codexbar_path = args.codexbar_path or config.codexbar_path
+    codexbar_path = resolve_codexbar_path(args.codexbar_path, config)
     cache = UsageCache.default()
 
     try:
         client = CodexBarClient(codexbar_path, timeout_seconds=config.timeout_seconds)
-        report = normalize_usage(client.fetch_json(providers, source=args.source))
+        report = normalize_usage(client.fetch_usage_json(providers, source=args.source))
+        cache.save(report)
+    except CodexBarError as exc:
+        report = _cached_or_error(cache, str(exc), config.use_cache_on_error)
+
+    _print_report(args.format, report, config, pretty=args.pretty)
+    return 0 if not report.error or report.stale else 1
+
+
+def _cost(args: argparse.Namespace) -> int:
+    config = AppConfig.load()
+    providers = args.providers or config.providers
+    codexbar_path = resolve_codexbar_path(args.codexbar_path, config)
+    cache = UsageCache.default()
+
+    try:
+        client = CodexBarClient(codexbar_path, timeout_seconds=config.timeout_seconds)
+        report = normalize_usage(client.fetch_cost_json(providers, days=args.days))
         cache.save(report)
     except CodexBarError as exc:
         report = _cached_or_error(cache, str(exc), config.use_cache_on_error)

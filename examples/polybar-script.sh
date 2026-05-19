@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-linux-codex-usage status --format json |
+linux-codex-usage cost --provider codex --format json |
   python3 -c 'import json, sys
 data = json.load(sys.stdin)
 parts = []

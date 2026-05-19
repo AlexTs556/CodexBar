@@ -45,8 +45,10 @@ def _provider_summary(provider: ProviderUsage) -> str:
         return f"{provider.label} {window.remaining_percent:g}%"
 
     if provider.credits and provider.credits.remaining is not None:
-        unit = provider.credits.unit or ""
-        return f"{provider.label} {provider.credits.remaining:g}{unit}"
+        return f"{provider.label} {_format_amount(provider.credits.remaining, provider.credits.unit)}"
+
+    if provider.credits and provider.credits.used is not None:
+        return f"{provider.label} {_format_amount(provider.credits.used, provider.credits.unit)}"
 
     return provider.label
 
@@ -65,8 +67,9 @@ def _provider_tooltip(provider: ProviderUsage) -> str:
             pieces.append(f"reset {window.reset_label or window.resets_at}")
         lines.append(" - " + ", ".join(pieces))
     if provider.credits and provider.credits.remaining is not None:
-        unit = provider.credits.unit or ""
-        lines.append(f"Credits: {provider.credits.remaining:g}{unit}")
+        lines.append(f"Credits: {_format_amount(provider.credits.remaining, provider.credits.unit)}")
+    if provider.credits and provider.credits.used is not None:
+        lines.append(f"Cost: {_format_amount(provider.credits.used, provider.credits.unit)}")
     if provider.error:
         lines.append(f"Error: {provider.error}")
     return "\n".join(lines)
@@ -96,3 +99,8 @@ def _css_class(
         return "warning"
     return "ok"
 
+
+def _format_amount(value: float, unit: str | None) -> str:
+    if unit == "USD":
+        return f"${value:.2f}"
+    return f"{value:g}{unit or ''}"

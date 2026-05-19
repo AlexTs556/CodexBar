@@ -15,12 +15,30 @@ class CodexBarClient:
     executable: str = "codexbar"
     timeout_seconds: int = 30
 
+    def fetch_usage_json(
+        self,
+        providers: list[str] | None = None,
+        source: str | None = None,
+    ) -> Any:
+        command = self._build_usage_command(providers, source=source)
+        return self._run_json(command)
+
+    def fetch_cost_json(
+        self,
+        providers: list[str] | None = None,
+        days: int | None = None,
+    ) -> Any:
+        command = self._build_cost_command(providers, days=days)
+        return self._run_json(command)
+
     def fetch_json(
         self,
         providers: list[str] | None = None,
         source: str | None = None,
     ) -> Any:
-        command = self._build_command(providers, source=source)
+        return self.fetch_usage_json(providers, source=source)
+
+    def _run_json(self, command: list[str]) -> Any:
 
         try:
             completed = subprocess.run(
@@ -49,7 +67,7 @@ class CodexBarClient:
                 raise CodexBarError(f"codexbar command failed: {detail}") from exc
             raise CodexBarError("codexbar returned invalid JSON") from exc
 
-    def _build_command(
+    def _build_usage_command(
         self,
         providers: list[str] | None,
         source: str | None = None,
@@ -60,4 +78,17 @@ class CodexBarClient:
             command.extend(["--provider", provider])
         if source:
             command.extend(["--source", source])
+        return command
+
+    def _build_cost_command(
+        self,
+        providers: list[str] | None,
+        days: int | None = None,
+    ) -> list[str]:
+        selected = providers or ["all"]
+        command = [self.executable, "cost", "--format", "json"]
+        for provider in selected:
+            command.extend(["--provider", provider])
+        if days is not None:
+            command.extend(["--days", str(days)])
         return command

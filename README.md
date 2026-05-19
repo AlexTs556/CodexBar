@@ -28,6 +28,8 @@ linux-codex-usage status --format json --pretty
 linux-codex-usage status --format waybar
 linux-codex-usage status --provider codex --provider claude
 linux-codex-usage status --provider codex --source cli
+linux-codex-usage cost --provider codex
+linux-codex-usage cost --provider codex --format waybar
 ```
 
 The command runs:
@@ -67,13 +69,31 @@ timeout_seconds = 30
 
 Provider credentials stay in the upstream CodexBar configuration. This project does not store API keys or browser cookies.
 
+## Local Cost Mode
+
+For Codex on Linux, the most reliable first data source is local cost scanning:
+
+```bash
+linux-codex-usage cost --provider codex --format waybar
+```
+
+This uses CodexBar's `cost` command to scan local Codex history under `~/.codex`. It does not require browser cookies or WebKit.
+
+Usage-limit mode is still available:
+
+```bash
+linux-codex-usage status --provider codex --source cli --format waybar
+```
+
+That path depends on the upstream Codex CLI app-server/RPC behavior and may fail when the app-server cannot provide account rate limits.
+
 ## Waybar
 
 Add a custom module:
 
 ```jsonc
 "custom/ai-usage": {
-  "exec": "linux-codex-usage status --format waybar",
+  "exec": "linux-codex-usage cost --provider codex --format waybar",
   "return-type": "json",
   "interval": 60,
   "tooltip": true

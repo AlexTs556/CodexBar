@@ -42,11 +42,9 @@ def _provider_row(provider: ProviderUsage) -> list[str]:
     credits = "-"
     if provider.credits:
         if provider.credits.remaining is not None:
-            unit = provider.credits.unit or ""
-            credits = f"{provider.credits.remaining:g}{unit}"
+            credits = _format_amount(provider.credits.remaining, provider.credits.unit)
         elif provider.credits.used is not None:
-            unit = provider.credits.unit or ""
-            credits = f"used {provider.credits.used:g}{unit}"
+            credits = f"used {_format_amount(provider.credits.used, provider.credits.unit)}"
 
     return [
         provider.label,
@@ -61,3 +59,8 @@ def _provider_row(provider: ProviderUsage) -> list[str]:
 def _format_row(row: list[str], widths: list[int]) -> str:
     return "  ".join(value.ljust(widths[index]) for index, value in enumerate(row))
 
+
+def _format_amount(value: float, unit: str | None) -> str:
+    if unit == "USD":
+        return f"${value:.2f}"
+    return f"{value:g}{unit or ''}"

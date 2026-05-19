@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
-ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+SCRIPT_PATH=$0
+if command -v readlink >/dev/null 2>&1; then
+  SCRIPT_PATH=$(readlink -f "$0")
+fi
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$SCRIPT_PATH")/.." && pwd)
 PYTHONPATH="$ROOT_DIR/src${PYTHONPATH:+:$PYTHONPATH}" exec python3 -m linux_codex_usage "$@"

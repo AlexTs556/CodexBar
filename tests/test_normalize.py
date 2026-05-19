@@ -95,6 +95,25 @@ class NormalizeUsageTest(unittest.TestCase):
         self.assertEqual(provider.status, "error")
         self.assertEqual(provider.error, "No available fetch strategy for synthetic.")
 
+    def test_normalizes_cost_payload(self):
+        report = normalize_usage(
+            [
+                {
+                    "provider": "codex",
+                    "source": "local",
+                    "last30DaysCostUSD": 123.45,
+                    "sessionCostUSD": 6.78,
+                    "updatedAt": "2026-05-19T20:51:18Z",
+                }
+            ]
+        )
+
+        provider = report.providers[0]
+        self.assertEqual(provider.source, "local")
+        self.assertEqual(provider.updated_at, "2026-05-19T20:51:18Z")
+        self.assertEqual(provider.credits.used, 123.45)
+        self.assertEqual(provider.credits.unit, "USD")
+
 
 if __name__ == "__main__":
     unittest.main()

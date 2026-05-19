@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -81,9 +82,36 @@ def create_default_config(path: Path | None = None) -> Path:
     return config_path
 
 
+def resolve_codexbar_path(cli_value: str | None, config: AppConfig) -> str:
+    for candidate in _codexbar_candidates(cli_value, config):
+        if _is_executable(candidate):
+            return candidate
+
+    return cli_value or config.codexbar_path or "codexbar"
+
+
+def _codexbar_candidates(cli_value: str | None, config: AppConfig) -> list[str]:
+    candidates: list[str] = []
+    if cli_value:
+        candidates.append(cli_value)
+    if config.codexbar_path:
+        candidates.append(config.codexbar_path)
+
+    repo_root = Path(__file__).resolve().parents[2]
+    candidates.append(str(repo_root / "tools" / "codexbar-cli" / "codexbar"))
+    candidates.append("codexbar")
+    return candidates
+
+
+def _is_executable(candidate: str) -> bool:
+    path = Path(candidate).expanduser()
+    if path.is_file() and os.access(path, os.X_OK):
+        return True
+    return shutil.which(candidate) is not None
+
+
 def _float_value(value: Any, default: float) -> float:
     try:
         return float(value)
     except (TypeError, ValueError):
         return default
-

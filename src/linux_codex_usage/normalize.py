@@ -59,7 +59,14 @@ def _normalize_provider(item: dict[str, Any]) -> ProviderUsage:
         label=label or _title_label(provider_id),
         source=_first_string(item, "source", "source_type", "method", default=None),
         status=status,
-        updated_at=_first_string(item, "updated_at", "fetched_at", "timestamp", default=None),
+        updated_at=_first_string(
+            item,
+            "updated_at",
+            "updatedAt",
+            "fetched_at",
+            "timestamp",
+            default=None,
+        ),
         account=_first_string(item, "account", "email", "user", "username", default=None),
         windows=_extract_windows(item),
         credits=_extract_credits(item),
@@ -123,9 +130,24 @@ def _extract_credits(item: dict[str, Any]) -> Credits | None:
     data = _as_dict(credits) if isinstance(credits, dict) else item
 
     remaining = _first_number(data, "remaining", "balance", "available", "left", default=None)
-    used = _first_number(data, "used", "spent", "cost", default=None)
+    used = _first_number(
+        data,
+        "used",
+        "spent",
+        "cost",
+        "last30DaysCostUSD",
+        "sessionCostUSD",
+        default=None,
+    )
     total = _first_number(data, "total", "limit", "quota", default=None)
     unit = _first_string(data, "unit", "currency", default=None)
+
+    if unit is None and (
+        "last30DaysCostUSD" in data
+        or "sessionCostUSD" in data
+        or str(data.get("source")) == "local"
+    ):
+        unit = "USD"
 
     if remaining is None and used is None and total is None:
         return None
