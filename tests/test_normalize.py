@@ -1,4 +1,6 @@
 import unittest
+import json
+from pathlib import Path
 
 from linux_codex_usage.normalize import normalize_usage
 
@@ -68,7 +70,13 @@ class NormalizeUsageTest(unittest.TestCase):
         self.assertEqual(provider.credits.remaining, 12.5)
         self.assertEqual(provider.credits.unit, "usd")
 
+    def test_normalizes_fixture(self):
+        fixture = Path(__file__).parent / "fixtures" / "codexbar_usage.json"
+        report = normalize_usage(json.loads(fixture.read_text(encoding="utf-8")))
+
+        self.assertEqual(report.providers[0].provider, "codex")
+        self.assertEqual(len(report.providers[0].windows), 2)
+
 
 if __name__ == "__main__":
     unittest.main()
-

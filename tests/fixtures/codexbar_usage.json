@@ -1,0 +1,28 @@
+{
+  "providers": [
+    {
+      "provider": "codex",
+      "label": "Codex",
+      "source": "codex-cli",
+      "account": "user@example.com",
+      "windows": [
+        {
+          "name": "session",
+          "used_percent": 28,
+          "resets_at": "2026-05-19T21:15:00Z",
+          "reset_label": "2h 15m"
+        },
+        {
+          "name": "weekly",
+          "remaining_percent": 41,
+          "reset_label": "Fri 09:00"
+        }
+      ],
+      "credits": {
+        "remaining": 112.4,
+        "unit": "credits"
+      }
+    }
+  ]
+}
+
