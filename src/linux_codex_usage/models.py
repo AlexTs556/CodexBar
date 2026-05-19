@@ -26,6 +26,16 @@ class WindowUsage:
             "reset_label": self.reset_label,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "WindowUsage":
+        return cls(
+            name=str(data.get("name") or "default"),
+            used_percent=_optional_float(data.get("used_percent")),
+            remaining_percent=_optional_float(data.get("remaining_percent")),
+            resets_at=_optional_string(data.get("resets_at")),
+            reset_label=_optional_string(data.get("reset_label")),
+        )
+
 
 @dataclass(slots=True)
 class Credits:
@@ -41,6 +51,15 @@ class Credits:
             "total": self.total,
             "unit": self.unit,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Credits":
+        return cls(
+            remaining=_optional_float(data.get("remaining")),
+            used=_optional_float(data.get("used")),
+            total=_optional_float(data.get("total")),
+            unit=_optional_string(data.get("unit")),
+        )
 
 
 @dataclass(slots=True)
@@ -72,6 +91,26 @@ class ProviderUsage:
             data["raw"] = self.raw
         return data
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ProviderUsage":
+        credits = data.get("credits")
+        return cls(
+            provider=str(data.get("provider") or "unknown"),
+            label=str(data.get("label") or data.get("provider") or "Unknown"),
+            source=_optional_string(data.get("source")),
+            status=str(data.get("status") or "ok"),
+            updated_at=_optional_string(data.get("updated_at")),
+            account=_optional_string(data.get("account")),
+            windows=[
+                WindowUsage.from_dict(window)
+                for window in data.get("windows", [])
+                if isinstance(window, dict)
+            ],
+            credits=Credits.from_dict(credits) if isinstance(credits, dict) else None,
+            error=_optional_string(data.get("error")),
+            raw=data.get("raw") if isinstance(data.get("raw"), dict) else None,
+        )
+
 
 @dataclass(slots=True)
 class UsageReport:
@@ -90,3 +129,30 @@ class UsageReport:
             ],
         }
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "UsageReport":
+        return cls(
+            providers=[
+                ProviderUsage.from_dict(provider)
+                for provider in data.get("providers", [])
+                if isinstance(provider, dict)
+            ],
+            generated_at=str(data.get("generated_at") or utc_now_iso()),
+            stale=bool(data.get("stale", False)),
+            error=_optional_string(data.get("error")),
+        )
+
+
+def _optional_float(value: Any) -> float | None:
+    if isinstance(value, bool) or value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _optional_string(value: Any) -> str | None:
+    if value is None:
+        return None
+    return str(value)
