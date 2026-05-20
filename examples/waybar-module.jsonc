@@ -1,6 +1,6 @@
 "custom/ai-usage": {
-  "exec": "linux-codex-usage bar",
+  "exec": "curl -sf http://127.0.0.1:8765/bar",
   "return-type": "json",
-  "interval": 60,
+  "interval": 10,
   "tooltip": true
 }

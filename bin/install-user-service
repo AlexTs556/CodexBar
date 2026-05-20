@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+set -eu
+
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+SERVICE_DIR="$HOME/.config/systemd/user"
+SERVICE_FILE="$SERVICE_DIR/linux-codex-usage.service"
+
+mkdir -p "$SERVICE_DIR"
+sed "s#%h/project/CodexBar#$ROOT_DIR#g" "$ROOT_DIR/examples/linux-codex-usage.service" > "$SERVICE_FILE"
+
+systemctl --user daemon-reload
+systemctl --user enable --now linux-codex-usage.service
+systemctl --user status linux-codex-usage.service --no-pager

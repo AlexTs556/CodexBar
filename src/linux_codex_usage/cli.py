@@ -13,6 +13,7 @@ from .formatters.text_formatter import format_text
 from .formatters.waybar_formatter import format_waybar
 from .models import UsageReport
 from .normalize import normalize_usage
+from .server import run_server
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -133,6 +134,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to the codexbar executable.",
     )
 
+    serve = subparsers.add_parser("serve", help="Run the live dashboard server.")
+    serve.add_argument("--host", default="127.0.0.1", help="Bind host.")
+    serve.add_argument("--port", type=int, default=8765, help="Bind port.")
+    serve.add_argument(
+        "--provider",
+        action="append",
+        dest="providers",
+        default=None,
+        help="Provider to fetch. Defaults to codex.",
+    )
+    serve.add_argument(
+        "--source",
+        choices=("auto", "web", "cli", "oauth", "api"),
+        default="oauth",
+        help="CodexBar provider source strategy.",
+    )
+    serve.add_argument(
+        "--refresh",
+        type=int,
+        default=60,
+        help="Live refresh interval in seconds.",
+    )
+    serve.add_argument(
+        "--cost-refresh",
+        type=int,
+        default=300,
+        help="Cost refresh interval in seconds.",
+    )
+    serve.add_argument(
+        "--codexbar-path",
+        default=None,
+        help="Path to the codexbar executable.",
+    )
+
     config = subparsers.add_parser("config", help="Manage local configuration.")
     config_subparsers = config.add_subparsers(dest="config_command")
     config_subparsers.add_parser("init", help="Create a default config file.")
@@ -159,6 +194,9 @@ def main(argv: list[str] | None = None) -> int:
         args.format = "waybar"
         args.pretty = False
         return _status(args)
+
+    if args.command == "serve":
+        return _serve(args)
 
     if args.command == "cost":
         return _cost(args)
@@ -202,6 +240,25 @@ def _cost(args: argparse.Namespace) -> int:
 
     _print_cost_report(args.format, report, config, pretty=args.pretty)
     return 0 if not report.error or report.stale else 1
+
+
+def _serve(args: argparse.Namespace) -> int:
+    config = AppConfig.load()
+    providers = args.providers or ["codex"]
+    codexbar_path = resolve_codexbar_path(args.codexbar_path, config)
+    client = CodexBarClient(codexbar_path, timeout_seconds=config.timeout_seconds)
+    print(f"Dashboard: http://{args.host}:{args.port}")
+    print(f"Waybar:    http://{args.host}:{args.port}/bar")
+    run_server(
+        host=args.host,
+        port=args.port,
+        client=client,
+        providers=providers,
+        source=args.source,
+        refresh_seconds=args.refresh,
+        cost_refresh_seconds=args.cost_refresh,
+    )
+    return 0
 
 
 def _cached_or_error(

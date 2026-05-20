@@ -45,10 +45,28 @@ That prints current account limits, usage percentages, remaining percentages, re
 For Waybar use:
 
 ```bash
-linux-codex-usage bar
+linux-codex-usage serve
 ```
 
-That prints Waybar JSON with current live usage windows. `--format waybar` is only for panel integrations and intentionally returns JSON.
+Then point Waybar at the long-running local endpoint:
+
+```bash
+curl -sf http://127.0.0.1:8765/bar
+```
+
+`linux-codex-usage bar` still exists for one-shot checks, but the dashboard server is the intended always-on mode.
+
+Install the user service:
+
+```bash
+bin/install-user-service
+```
+
+Dashboard:
+
+```text
+http://127.0.0.1:8765/
+```
 
 For historical local cost analytics, run cost without `--format waybar`:
 
@@ -119,9 +137,9 @@ Add a custom module:
 
 ```jsonc
 "custom/ai-usage": {
-  "exec": "linux-codex-usage bar",
+  "exec": "curl -sf http://127.0.0.1:8765/bar",
   "return-type": "json",
-  "interval": 60,
+  "interval": 10,
   "tooltip": true
 }
 ```

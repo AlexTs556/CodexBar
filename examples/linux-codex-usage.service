@@ -1,0 +1,12 @@
+[Unit]
+Description=Linux Codex Usage live dashboard
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/project/CodexBar/bin/linux-codex-usage serve --host 127.0.0.1 --port 8765 --refresh 30 --cost-refresh 180
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
