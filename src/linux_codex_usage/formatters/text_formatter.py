@@ -7,7 +7,9 @@ def format_text(report: UsageReport) -> str:
     if not report.providers:
         return report.error or "No usage data available."
 
-    rows = [_provider_row(provider) for provider in report.providers]
+    rows = []
+    for provider in report.providers:
+        rows.extend(_provider_rows(provider))
     widths = [
         max(len(row[index]) for row in rows + [HEADER])
         for index in range(len(HEADER))
@@ -23,36 +25,62 @@ def format_text(report: UsageReport) -> str:
     return "\n".join(lines)
 
 
-HEADER = ["Provider", "Status", "Window", "Remaining", "Credits", "Reset"]
+HEADER = ["Provider", "Account", "Source", "Window", "Used", "Remaining", "Reset", "Notes"]
 SEPARATOR = ["-" * len(item) for item in HEADER]
 
 
-def _provider_row(provider: ProviderUsage) -> list[str]:
-    window = provider.windows[0] if provider.windows else None
-    remaining = "-"
-    reset = "-"
-    window_name = "-"
-
-    if window:
-        window_name = window.name
-        if window.remaining_percent is not None:
-            remaining = f"{window.remaining_percent:g}%"
-        reset = window.reset_label or window.resets_at or "-"
-
-    credits = "-"
+def _provider_rows(provider: ProviderUsage) -> list[list[str]]:
     if provider.credits:
         if provider.credits.remaining is not None:
-            credits = _format_amount(provider.credits.remaining, provider.credits.unit)
+            credits = f"credits {_format_amount(provider.credits.remaining, provider.credits.unit)}"
         elif provider.credits.used is not None:
-            credits = f"used {_format_amount(provider.credits.used, provider.credits.unit)}"
+            credits = f"cost {_format_amount(provider.credits.used, provider.credits.unit)}"
+        else:
+            credits = ""
+    else:
+        credits = ""
 
+    if not provider.windows:
+        return [[
+            provider.label,
+            provider.account or "-",
+            provider.source or "-",
+            "-",
+            "-",
+            "-",
+            "-",
+            provider.error or credits or provider.status,
+        ]]
+
+    rows = []
+    for index, window in enumerate(provider.windows):
+        rows.append([
+            provider.label if index == 0 else "",
+            provider.account or "-" if index == 0 else "",
+            provider.source or "-" if index == 0 else "",
+            window.name,
+            f"{window.used_percent:g}%" if window.used_percent is not None else "-",
+            f"{window.remaining_percent:g}%" if window.remaining_percent is not None else "-",
+            window.reset_label or window.resets_at or "-",
+            provider.error if index == 0 and provider.error else credits if index == 0 else "",
+        ])
+    return rows
+
+
+def _provider_row(provider: ProviderUsage) -> list[str]:
+    return _provider_rows(provider)[0]
+
+
+def _legacy_provider_row(provider: ProviderUsage) -> list[str]:
     return [
         provider.label,
-        provider.status,
-        window_name,
-        remaining,
-        credits,
-        provider.error or reset,
+        provider.account or "-",
+        provider.source or "-",
+        "-",
+        "-",
+        "-",
+        "-",
+        provider.error or provider.status,
     ]
 
 

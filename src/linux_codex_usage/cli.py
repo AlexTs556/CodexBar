@@ -82,6 +82,57 @@ def build_parser() -> argparse.ArgumentParser:
         help="Pretty-print JSON output.",
     )
 
+    live = subparsers.add_parser("live", help="Show live Codex account limits.")
+    live.add_argument(
+        "--format",
+        choices=("text", "json", "waybar"),
+        default="text",
+        help="Output format.",
+    )
+    live.add_argument(
+        "--provider",
+        action="append",
+        dest="providers",
+        default=None,
+        help="Provider to fetch. Defaults to codex.",
+    )
+    live.add_argument(
+        "--source",
+        choices=("auto", "web", "cli", "oauth", "api"),
+        default="oauth",
+        help="CodexBar provider source strategy.",
+    )
+    live.add_argument(
+        "--codexbar-path",
+        default=None,
+        help="Path to the codexbar executable.",
+    )
+    live.add_argument(
+        "--pretty",
+        action="store_true",
+        help="Pretty-print JSON output.",
+    )
+
+    bar = subparsers.add_parser("bar", help="Print live Waybar JSON.")
+    bar.add_argument(
+        "--provider",
+        action="append",
+        dest="providers",
+        default=None,
+        help="Provider to fetch. Defaults to codex.",
+    )
+    bar.add_argument(
+        "--source",
+        choices=("auto", "web", "cli", "oauth", "api"),
+        default="oauth",
+        help="CodexBar provider source strategy.",
+    )
+    bar.add_argument(
+        "--codexbar-path",
+        default=None,
+        help="Path to the codexbar executable.",
+    )
+
     config = subparsers.add_parser("config", help="Manage local configuration.")
     config_subparsers = config.add_subparsers(dest="config_command")
     config_subparsers.add_parser("init", help="Create a default config file.")
@@ -101,6 +152,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "status":
         return _status(args)
 
+    if args.command == "live":
+        return _status(args)
+
+    if args.command == "bar":
+        args.format = "waybar"
+        args.pretty = False
+        return _status(args)
+
     if args.command == "cost":
         return _cost(args)
 
@@ -113,7 +172,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _status(args: argparse.Namespace) -> int:
     config = AppConfig.load()
-    providers = args.providers or config.providers
+    providers = args.providers or (["codex"] if args.command in {"live", "bar"} else config.providers)
     codexbar_path = resolve_codexbar_path(args.codexbar_path, config)
     cache = UsageCache.default()
 

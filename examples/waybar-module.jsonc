@@ -1,5 +1,5 @@
 "custom/ai-usage": {
-  "exec": "linux-codex-usage cost --provider codex --format waybar",
+  "exec": "linux-codex-usage bar",
   "return-type": "json",
   "interval": 60,
   "tooltip": true

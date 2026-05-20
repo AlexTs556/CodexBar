@@ -26,7 +26,7 @@ class WaybarFormatterTest(unittest.TestCase):
 
         payload = json.loads(format_waybar(report))
 
-        self.assertEqual(payload["text"], "Codex 72%")
+        self.assertEqual(payload["text"], "Codex session 28%")
         self.assertEqual(payload["class"], "ok")
         self.assertIn("2h 15m", payload["tooltip"])
 
@@ -56,4 +56,3 @@ class WaybarFormatterTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

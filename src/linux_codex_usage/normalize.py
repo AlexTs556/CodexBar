@@ -46,6 +46,7 @@ def _dict_to_provider_items(value: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _normalize_provider(item: dict[str, Any]) -> ProviderUsage:
+    usage = item.get("usage") if isinstance(item.get("usage"), dict) else {}
     provider_id = _first_string(item, "provider", "id", "name", default="unknown")
     label = _first_string(item, "label", "display_name", "title", default=None)
     status = _first_string(item, "status", "state", default=None)
@@ -66,8 +67,15 @@ def _normalize_provider(item: dict[str, Any]) -> ProviderUsage:
             "fetched_at",
             "timestamp",
             default=None,
+        )
+        or _first_string(
+            usage,
+            "updated_at",
+            "updatedAt",
+            default=None,
         ),
-        account=_first_string(item, "account", "email", "user", "username", default=None),
+        account=_first_string(item, "account", "email", "user", "username", default=None)
+        or _first_string(usage, "accountEmail", "account", "email", default=None),
         windows=_extract_windows(item),
         credits=_extract_credits(item),
         error=error,
@@ -76,6 +84,12 @@ def _normalize_provider(item: dict[str, Any]) -> ProviderUsage:
 
 
 def _extract_windows(item: dict[str, Any]) -> list[WindowUsage]:
+    usage = item.get("usage")
+    if isinstance(usage, dict):
+        usage_windows = _extract_usage_windows(usage)
+        if usage_windows:
+            return usage_windows
+
     for key in WINDOW_KEYS:
         value = item.get(key)
         if isinstance(value, list):
@@ -90,6 +104,30 @@ def _extract_windows(item: dict[str, Any]) -> list[WindowUsage]:
     if inline_window.used_percent is not None or inline_window.remaining_percent is not None:
         return [inline_window]
     return []
+
+
+def _extract_usage_windows(usage: dict[str, Any]) -> list[WindowUsage]:
+    windows: list[WindowUsage] = []
+    for key in ("primary", "secondary", "tertiary"):
+        value = usage.get(key)
+        if not isinstance(value, dict):
+            continue
+        window = _normalize_window(value | {"name": _window_name(key, value)}, key)
+        windows.append(window)
+    return windows
+
+
+def _window_name(fallback_name: str, item: dict[str, Any]) -> str:
+    minutes = _to_float(item.get("windowMinutes"))
+    if minutes == 300:
+        return "5h"
+    if minutes == 10080:
+        return "weekly"
+    if minutes is not None and minutes >= 60:
+        hours = minutes / 60
+        if hours.is_integer():
+            return f"{int(hours)}h"
+    return fallback_name
 
 
 def _normalize_window(item: dict[str, Any], fallback_name: str) -> WindowUsage:
@@ -108,6 +146,7 @@ def _normalize_window(item: dict[str, Any], fallback_name: str) -> WindowUsage:
         "percent_used",
         "usage_percent",
         "usagePct",
+        "usedPercent",
         default=None,
     )
 
@@ -121,7 +160,15 @@ def _normalize_window(item: dict[str, Any], fallback_name: str) -> WindowUsage:
         used_percent=used_percent,
         remaining_percent=remaining_percent,
         resets_at=_first_string(item, "resets_at", "reset_at", "resetAt", "expires_at", default=None),
-        reset_label=_first_string(item, "reset_label", "resetLabel", "reset_in", "resetIn", default=None),
+        reset_label=_first_string(
+            item,
+            "reset_label",
+            "resetLabel",
+            "reset_in",
+            "resetIn",
+            "resetDescription",
+            default=None,
+        ),
     )
 
 

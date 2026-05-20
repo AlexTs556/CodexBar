@@ -23,6 +23,8 @@ python -m pip install -e .
 ## Basic Usage
 
 ```bash
+linux-codex-usage live
+linux-codex-usage bar
 linux-codex-usage status
 linux-codex-usage status --format json --pretty
 linux-codex-usage status --format waybar
@@ -32,15 +34,29 @@ linux-codex-usage cost --provider codex
 linux-codex-usage cost --provider codex --format waybar
 ```
 
-For terminal use, run cost without `--format waybar`:
+For live terminal use:
+
+```bash
+linux-codex-usage live
+```
+
+That prints current account limits, usage percentages, remaining percentages, reset times, and account/source metadata.
+
+For Waybar use:
+
+```bash
+linux-codex-usage bar
+```
+
+That prints Waybar JSON with current live usage windows. `--format waybar` is only for panel integrations and intentionally returns JSON.
+
+For historical local cost analytics, run cost without `--format waybar`:
 
 ```bash
 linux-codex-usage cost --provider codex
 ```
 
 That prints a human-readable report with today, last 7 days, last 30 days, top models, and recent daily usage.
-
-`--format waybar` is only for panel integrations and intentionally returns Waybar JSON.
 
 The command runs:
 
@@ -103,7 +119,7 @@ Add a custom module:
 
 ```jsonc
 "custom/ai-usage": {
-  "exec": "linux-codex-usage cost --provider codex --format waybar",
+  "exec": "linux-codex-usage bar",
   "return-type": "json",
   "interval": 60,
   "tooltip": true

@@ -41,8 +41,9 @@ def _provider_summary(provider: ProviderUsage) -> str:
         return f"{provider.label} error"
 
     window = provider.windows[0] if provider.windows else None
-    if window and window.remaining_percent is not None:
-        return f"{provider.label} {window.remaining_percent:g}%"
+    if window:
+        windows = " ".join(_window_summary(window) for window in provider.windows)
+        return f"{provider.label} {windows}"
 
     if provider.credits and provider.credits.remaining is not None:
         return f"{provider.label} {_format_amount(provider.credits.remaining, provider.credits.unit)}"
@@ -51,6 +52,19 @@ def _provider_summary(provider: ProviderUsage) -> str:
         return f"{provider.label} {_format_amount(provider.credits.used, provider.credits.unit)}"
 
     return provider.label
+
+
+def _window_summary(window) -> str:
+    value = window.used_percent
+    suffix = "used"
+    if value is None:
+        value = window.remaining_percent
+        suffix = "left"
+    if value is None:
+        return window.name
+    if suffix == "used":
+        return f"{window.name} {value:g}%"
+    return f"{window.name} {value:g}% left"
 
 
 def _provider_tooltip(provider: ProviderUsage) -> str:

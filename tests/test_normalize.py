@@ -114,6 +114,40 @@ class NormalizeUsageTest(unittest.TestCase):
         self.assertEqual(provider.credits.used, 123.45)
         self.assertEqual(provider.credits.unit, "USD")
 
+    def test_normalizes_codex_live_usage_payload(self):
+        report = normalize_usage(
+            [
+                {
+                    "provider": "codex",
+                    "source": "oauth",
+                    "usage": {
+                        "accountEmail": "user@example.com",
+                        "primary": {
+                            "resetDescription": "10:37 PM",
+                            "resetsAt": "2026-05-20T20:37:19Z",
+                            "usedPercent": 0,
+                            "windowMinutes": 300,
+                        },
+                        "secondary": {
+                            "resetDescription": "26 May 2026 at 8:42 PM",
+                            "resetsAt": "2026-05-26T18:42:48Z",
+                            "usedPercent": 4,
+                            "windowMinutes": 10080,
+                        },
+                        "updatedAt": "2026-05-20T15:38:57Z",
+                    },
+                }
+            ]
+        )
+
+        provider = report.providers[0]
+        self.assertEqual(provider.account, "user@example.com")
+        self.assertEqual(provider.updated_at, "2026-05-20T15:38:57Z")
+        self.assertEqual(provider.windows[0].name, "5h")
+        self.assertEqual(provider.windows[0].remaining_percent, 100.0)
+        self.assertEqual(provider.windows[1].name, "weekly")
+        self.assertEqual(provider.windows[1].used_percent, 4.0)
+
 
 if __name__ == "__main__":
     unittest.main()
